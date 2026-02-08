@@ -89,7 +89,6 @@ class GitHubTrending:
             params['since'] = since
         
         try:
-            print(f"正在获取GitHub趋势数据...")
             response = self.session.get(url, params=params, timeout=10)
             response.raise_for_status()
             
@@ -194,9 +193,8 @@ class GitHubTrending:
             print("未找到任何项目")
             return
         
-        print(f"\n{'='*80}")
         print(f"GitHub热门项目 ({datetime.now().strftime('%Y-%m-%d %H:%M:%S')})")
-        print(f"{'='*80}")
+        print(f"{'='*20}")
         
         # 按今日星标数排序
         sorted_projects = sorted(projects, key=lambda x: x['stars_today'], reverse=True)
@@ -210,7 +208,7 @@ class GitHubTrending:
             print(f"    🔗 {project['url']}")
         
         # 统计信息
-        print(f"\n{'='*80}")
+        print(f"\n{'='*20}")
         print("📊 统计信息:")
         print(f"    • 总项目数: {len(projects)}")
         
@@ -227,9 +225,7 @@ class GitHubTrending:
         if projects:
             top_project = max(projects, key=lambda x: x['stars_today'])
             print(f"    • 今日最火: {top_project['name']} (+{top_project['stars_today']:,}⭐)")
-        
-        print(f"{'='*80}")
-    
+            
     def export_to_csv(self, projects: List[Dict[str, Any]], filename: str = "github_trending.csv") -> None:
         """导出到CSV文件"""
         if not projects:
