@@ -2,28 +2,51 @@ name: scheduled-wecom
 
 on:
   schedule:
-    - cron: '0 0 * * *' # 每天 00:00 UTC，按需修改
+    - cron: '0 10 * * *' # 每天 00:00 UTC，按需修改
   workflow_dispatch: {}
 
 jobs:
   run-and-notify:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          clean: true
 
-      - name: Run project task
-        run: |
-          # 在这里放你要定时运行的命令，例如测试、构建或脚本
-          echo "Running scheduled task..."
+      - name: Set up Python
+        if: success()
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: "pip"
 
-      - name: Prepare send script
+      - name: Install dependencies
+        if: success()
         run: |
-          mkdir -p .github/scripts
-          chmod +x .github/scripts/send_wecom.sh || true
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run github_trending and capture output
+        id: trending
+        env:
+          # 让脚本能访问 Secrets（如果脚本需要）
+          WECOM_WEBHOOK_KEY: ${{ secrets.WECOM_WEBHOOK_KEY }}
+          WECOM_SIGN_SECRET: ${{ secrets.WECOM_SIGN_SECRET }}
+        run: |
+          set -euo pipefail
+          # 运行脚本，捕获 stdout/stderr 到变量，即使脚本返回非零也继续
+          OUTPUT=$(python3 github_trending.py 2>&1 || true)
+          # 将输出写到文件供调试查看
+          printf "%s" "$OUTPUT" > github_trending.output.txt
+          # 将输出设为 step 输出（使用 GITHUB_OUTPUT 机制）
+          printf 'json<<EOF\n%s\nEOF\n' "$OUTPUT" >> $GITHUB_OUTPUT
 
       - name: Send WeCom notification
         env:
           WECOM_WEBHOOK_KEY: ${{ secrets.WECOM_WEBHOOK_KEY }}
           WECOM_SIGN_SECRET: ${{ secrets.WECOM_SIGN_SECRET }}
+          JSON_OUTPUT: ${{ steps.trending.outputs.json }}
         run: |
           .github/scripts/send_wecom.sh
