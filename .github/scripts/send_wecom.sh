@@ -28,7 +28,21 @@ PY
   URL="${URL}&timestamp=${TIMESTAMP}&sign=${SIGN}"
 fi
 
-# 构造消息（text 示例），按需修改成 markdown 或其他类型
-PAYLOAD='{"msgtype":"text","text":{"content":"定时任务已运行：项目任务完成。"}}'
+# 运行项目脚本并获取输出，将结果作为 markdown 内容发送
+# 限制内容长度以避免超过 webhook 限制（截断到 6000 字节）
+OUTPUT_JSON=$(python3 - <<'PY'
+import subprocess, json
+try:
+  proc = subprocess.run(["python3", "github_trending.py"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, check=False)
+  text = proc.stdout or "(no output)"
+except Exception as e:
+  text = f"(error running github_trending.py) {e}"
+# 截断到 6000 字符
+text = text[:6000]
+print(json.dumps(text))
+PY
+)
 
-curl -sS -H "Content-Type: application/json" -d "${PAYLOAD}" "${URL}"
+PAYLOAD=$(printf '{"msgtype":"markdown","markdown":{"content":%s}}' "$OUTPUT_JSON")
+
+curl -sS -H "Content-Type: application/json" -d "$PAYLOAD" "$URL"
