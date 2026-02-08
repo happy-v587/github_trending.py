@@ -77,7 +77,6 @@ class GitHubTrending:
         if use_cache:
             cached_data = self._load_cache()
             if cached_data:
-                print("使用缓存数据...")
                 return cached_data
         
         # 构建URL
@@ -108,7 +107,6 @@ class GitHubTrending:
             # 尝试使用缓存
             cached_data = self._load_cache()
             if cached_data:
-                print("使用缓存数据...")
                 return cached_data
             return []
     

@@ -2,7 +2,6 @@
 set -euo pipefail
 
 # send_wecom.sh
-# 优先使用环境变量 JSON_OUTPUT（来自 workflow），否则运行 github_trending.py 获取输出。
 # 环境变量：
 # WECOM_WEBHOOK_KEY - 必填（来自仓库 Secrets）
 # WECOM_SIGN_SECRET - 可选（如果机器人开启加签）
@@ -30,36 +29,6 @@ PY
   URL="${URL}&timestamp=${TIMESTAMP}&sign=${SIGN}"
 fi
 
-# 获取原始输出
-if [ -n "${JSON_OUTPUT:-}" ]; then
-  RAW_OUTPUT="$JSON_OUTPUT"
-else
-  RAW_OUTPUT=$(python3 - <<'PY'
-import subprocess
-try:
-    proc = subprocess.run(["python3", "github_trending.py"], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, check=False)
-    text = proc.stdout or "(no output)"
-except Exception as e:
-    text = f"(error running github_trending.py) {e}"
-print(text)
-PY
-)
-fi
-
-# 截断到 6000 字符以防超长
-TRUNCATED=$(printf "%s" "$RAW_OUTPUT" | cut -c1-6000)
-
-# JSON 编码文本以安全插入到 payload
-ESCAPED_JSON=$(python3 - <<'PY'
-import json,sys
-text = sys.stdin.read()
-print(json.dumps(text))
-PY
-<<EOF
-$TRUNCATED
-EOF
-)
-
-PAYLOAD=$(printf '{"msgtype":"markdown","markdown":{"content":%s}}' "$ESCAPED_JSON")
+PAYLOAD=$(printf '{"msgtype":"text","text":{"content":"%s"}}' "$TEXT_OUTPUT")
 
 curl -sS -H "Content-Type: application/json" -d "$PAYLOAD" "$URL"

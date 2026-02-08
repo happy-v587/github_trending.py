@@ -9,7 +9,7 @@
    - `WECOM_WEBHOOK_KEY`（必填）
    - `WECOM_SIGN_SECRET`（可选，当机器人开启加签时填写）
 3. 在仓库中添加 workflow：`.github/workflows/schedule_wecom.yml`，按需修改 `cron` 定时（注意 GitHub Actions 的 `cron` 使用 UTC）。
-4. 添加发送脚本：`.github/scripts/send_wecom.sh`，脚本会处理可选签名并 POST 消息到群机器人。
+4. 添加发送脚本：`send_wecom.sh`，脚本会处理可选签名并 POST 消息到群机器人。
 5. 手动运行或等待定时触发，验证企业微信是否收到消息。
 
 ## Secrets 配置
@@ -27,8 +27,4 @@
 ## 文件位置
 
 - Workflow: `.github/workflows/schedule_wecom.yml`
-- 脚本: `.github/scripts/send_wecom.sh`
-
----
-
-如需我替你把 `cron` 时间改为本地某个时刻，或把通知内容自定义为 `markdown` 格式，请告诉我。
+- 脚本: `send_wecom.sh`

@@ -30,23 +30,19 @@ jobs:
 
       - name: Run github_trending and capture output
         id: trending
-        env:
-          # 让脚本能访问 Secrets（如果脚本需要）
-          WECOM_WEBHOOK_KEY: ${{ secrets.WECOM_WEBHOOK_KEY }}
-          WECOM_SIGN_SECRET: ${{ secrets.WECOM_SIGN_SECRET }}
         run: |
           set -euo pipefail
           # 运行脚本，捕获 stdout/stderr 到变量，即使脚本返回非零也继续
           OUTPUT=$(python3 github_trending.py 2>&1 || true)
           # 将输出写到文件供调试查看
           printf "%s" "$OUTPUT" > github_trending.output.txt
-          # 将输出设为 step 输出（使用 GITHUB_OUTPUT 机制）
-          printf 'json<<EOF\n%s\nEOF\n' "$OUTPUT" >> $GITHUB_OUTPUT
+          # 将输出设为 step 输出（使用 GITHUB_OUTPUT 机制），这里使用 'text' 作为 key
+          printf 'text<<EOF\n%s\nEOF\n' "$OUTPUT" >> "$GITHUB_OUTPUT"
 
       - name: Send WeCom notification
         env:
           WECOM_WEBHOOK_KEY: ${{ secrets.WECOM_WEBHOOK_KEY }}
           WECOM_SIGN_SECRET: ${{ secrets.WECOM_SIGN_SECRET }}
-          JSON_OUTPUT: ${{ steps.trending.outputs.json }}
+          TEXT_OUTPUT: ${{ steps.trending.outputs.text }}
         run: |
-          .github/scripts/send_wecom.sh
+          ./send_wecom.sh
