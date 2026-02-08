@@ -1,0 +1,29 @@
+name: scheduled-wecom
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # 每天 00:00 UTC，按需修改
+  workflow_dispatch: {}
+
+jobs:
+  run-and-notify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run project task
+        run: |
+          # 在这里放你要定时运行的命令，例如测试、构建或脚本
+          echo "Running scheduled task..."
+
+      - name: Prepare send script
+        run: |
+          mkdir -p .github/scripts
+          chmod +x .github/scripts/send_wecom.sh || true
+
+      - name: Send WeCom notification
+        env:
+          WECOM_WEBHOOK_KEY: ${{ secrets.WECOM_WEBHOOK_KEY }}
+          WECOM_SIGN_SECRET: ${{ secrets.WECOM_SIGN_SECRET }}
+        run: |
+          .github/scripts/send_wecom.sh
