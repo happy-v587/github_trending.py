@@ -45,4 +45,5 @@ jobs:
           WECOM_SIGN_SECRET: ${{ secrets.WECOM_SIGN_SECRET }}
           TEXT_OUTPUT: ${{ steps.trending.outputs.text }}
         run: |
+          chmod +x ./send_wecom.sh
           ./send_wecom.sh
